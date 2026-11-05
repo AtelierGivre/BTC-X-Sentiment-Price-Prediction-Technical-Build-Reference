@@ -8,3 +8,6 @@ data_demo/
 reports_demo/
 logs/
 *.egg-info/
+
+# submission notes (may hold tokens)
+SUBMISSION.md
