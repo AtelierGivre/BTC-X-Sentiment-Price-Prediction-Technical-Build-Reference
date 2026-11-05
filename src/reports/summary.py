@@ -15,6 +15,15 @@ def _mean(frame: pd.DataFrame, col: str) -> float:
     return float(frame[col].mean()) if len(frame) else float("nan")
 
 
+def _snippet(news: dict, limit: int = 180) -> str:
+    """One-line preview of the article body, without repeating the headline."""
+    title = str(news.get("title") or "").strip()
+    body = " ".join(str(news.get("content") or "").split())
+    if title and body.lower().startswith(title.lower()):
+        body = body[len(title):].lstrip(" .:-—")
+    return body[:limit]
+
+
 def main() -> None:
     m = pd.read_parquet(PROC / "master.parquet").sort_values("hour")
     fc = pd.read_csv(PROC / "final_forecast.csv")
@@ -33,7 +42,7 @@ def main() -> None:
         for r in fc.itertuples()
     )
     headlines = "\n".join(
-        f"- **{n.get('title', 'untitled')}** — {n.get('url', '')}  \n  {str(n.get('content', ''))[:180]}"
+        f"- **{n.get('title', 'untitled')}** — {n.get('url', '')}  \n  {_snippet(n)}"
         for n in news[:5]
     ) or "- No Tavily headlines (key not set or no results)."
 
