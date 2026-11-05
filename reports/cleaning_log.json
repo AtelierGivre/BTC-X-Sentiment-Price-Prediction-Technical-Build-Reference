@@ -1,0 +1,9 @@
+{
+  "start": 28342,
+  "after_dedup_tweet_id": 28342,
+  "after_nonempty": 28331,
+  "after_english_filter": 28312,
+  "after_author_repeats": 28291,
+  "after_swarm_dedup": 28291,
+  "after_spam_filter": 28291
+}
