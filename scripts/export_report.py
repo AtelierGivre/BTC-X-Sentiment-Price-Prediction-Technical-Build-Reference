@@ -15,7 +15,6 @@ import datetime as dt
 import functools
 import http.server
 import socketserver
-import subprocess
 import threading
 from pathlib import Path
 
@@ -79,15 +78,8 @@ COVER = """
 
 
 def _generated_line() -> str:
-    try:
-        head = subprocess.run(
-            ["git", "rev-parse", "--short", "HEAD"],
-            cwd=ROOT, capture_output=True, text=True, check=True,
-        ).stdout.strip()
-    except Exception:
-        head = "unknown"
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
-    return f"Generated {today} &middot; source commit {head} &middot; 25 tests passing"
+    return f"Generated {today} &middot; 25 tests passing"
 
 
 def serve() -> tuple[socketserver.TCPServer, int]:
