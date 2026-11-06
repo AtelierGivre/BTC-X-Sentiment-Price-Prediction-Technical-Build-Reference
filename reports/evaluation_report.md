@@ -92,6 +92,10 @@ benchmark at any horizon. Full metrics (RMSE, MAE, directional accuracy, Spearma
 are in `reports/metrics_prediction.csv`.
 
 ## 7. Results — strategy (after costs)
+`sharpe` is the **Sharpe Ratio**, `sortino` is the **Sortino Ratio**, and `max_drawdown` is the
+**Max Drawdown** (peak-to-trough on the compounded equity curve). All are annualised from
+hourly net returns.
+
 | strategy                     |   sharpe |   sharpe_ci_low |   sharpe_ci_high |   sortino |   max_drawdown |   total_return |   gross_return |   fee_drag |   n_trades |   n_hours |
 |:-----------------------------|---------:|----------------:|-----------------:|----------:|---------------:|---------------:|---------------:|-----------:|-----------:|----------:|
 | buy_hold                     |   -4.401 |          -9.298 |            1.900 |    -5.816 |         -0.116 |         -0.104 |         -0.104 |      0.000 |          1 |       672 |

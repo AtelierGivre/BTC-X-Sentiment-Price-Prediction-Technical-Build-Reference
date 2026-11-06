@@ -142,6 +142,10 @@ benchmark at any horizon. Full metrics (RMSE, MAE, directional accuracy, Spearma
 are in `reports/metrics_prediction.csv`.
 
 ## 7. Results — strategy (after costs)
+`sharpe` is the **Sharpe Ratio**, `sortino` is the **Sortino Ratio**, and `max_drawdown` is the
+**Max Drawdown** (peak-to-trough on the compounded equity curve). All are annualised from
+hourly net returns.
+
 {_table(st, floatfmt=".3f")}
 
 `fee_drag` is total fees in log-return units (7 bps × turnover); `gross_return` adds it back,

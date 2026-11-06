@@ -26,7 +26,7 @@ Tavily news ──────────────────────�
 | Model for n+0 … n+5 | `src/models/walkforward.py` — Ridge, LightGBM, naive |
 | Walk-forward validation | 4 folds, 6-bar purge, 672 out-of-sample hours |
 | Visual matrix output generator | `reports/figures/01…08` — sentiment vs price over time, plus the lag × horizon matrix |
-| Evaluation report (Sharpe / Sortino / Max Drawdown) | `reports/evaluation_report.md` §7 |
+| Evaluation report (Sharpe / Sortino / Max Drawdown) | `reports/evaluation_report.pdf` (and `.md`) — §7 |
 | Tokens + actor IDs for reproduction | `.env.example`; `.env` is never committed |
 
 ## Fixed conventions (these prevent leakage)
@@ -106,9 +106,27 @@ Actor notes:
 | `apidojo~twitter-scraper-lite` | `nfp1fpt5gUlBwPcor` | demo only | rejected: 5 runs/month × 10 items on FREE |
 | `coder_luffy~free-tweet-scraper` | `hfNNTkPlcLkjKJYKj` | $1.99/1K | rejected: needs tweet IDs, no search |
 
-Outputs: `reports/evaluation_report.md`, `reports/sentiment_summary.md`,
-`reports/figures/*.html`, `reports/metrics_*.csv`, `logs/pipeline.log`.
-Small pre-computed tables are copied to `artifacts/` so the report can be rebuilt offline.
+Outputs: `reports/evaluation_report.pdf` (+ `.md` source), `reports/sentiment_summary.md`,
+`reports/figures/*.html`, `reports/figures/png/*.png`, `reports/metrics_*.csv`,
+`logs/pipeline.log`. Small pre-computed tables are copied to `artifacts/` so the report can be
+rebuilt offline.
+
+### PDF and PNG export (optional, dev-only)
+
+The committed PDF and PNGs are produced by `scripts/export_report.py`, which screenshots the
+interactive charts with headless Chromium and prints the Markdown report to A4. It is not part
+of the pipeline and imports nothing that the model, evaluation or report path uses.
+
+```bash
+pip install playwright pypdf markdown
+playwright install chromium
+python scripts/export_report.py
+```
+
+It fails loudly if the PDF is missing any of Sharpe, Sortino, `max_drawdown` or an appendix
+chart, so the artefact cannot silently regress. A chart is exported at 2x resolution
+(~2768 px wide) and stays readable when the email client scales it down.
+
 
 ## Folder map
 
@@ -122,6 +140,7 @@ src/models/walkforward.py    folds, naive/Ridge/LightGBM, ablations
 src/evaluation/              metrics.py, backtest.py
 src/visualization/charts.py  8 interactive charts
 src/reports/                 summary.py, evaluation_report.py
+scripts/export_report.py     optional PDF/PNG export (Playwright; not in the pipeline)
 tests/                       leakage, folds, metrics
 ```
 
