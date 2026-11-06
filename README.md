@@ -125,11 +125,3 @@ src/reports/                 summary.py, evaluation_report.py
 tests/                       leakage, folds, metrics
 ```
 
-## Fallbacks
-
-- **Binance blocked / HTTP 451** → `fetch_prices()` tries `data-api.binance.vision`, then
-  yfinance (`BTC-USD`, hourly history limited to ~730 days).
-- **Apify too expensive / flaky** → scrape a shorter real window (e.g. 30 days) and say so in
-  the report. Do **not** silently fill the gap with Kaggle data.
-- **Transformer problems** → stay on VADER; nothing else depends on it.
-- **Tavily down** → the summary builds without headlines.
