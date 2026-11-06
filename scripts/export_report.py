@@ -79,7 +79,7 @@ COVER = """
 
 def _generated_line() -> str:
     today = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d")
-    return f"Generated {today} &middot; 25 tests passing"
+    return f"Generated {today}"
 
 
 def serve() -> tuple[socketserver.TCPServer, int]:

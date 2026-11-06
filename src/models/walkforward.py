@@ -35,9 +35,11 @@ def make_folds(n: int, train0: int, test: int, step: int, gap: int):
 
 
 def make_ridge():
+    # RidgeCV's internal CV must also purge: the training targets overlap by up to
+    # max(HORIZONS) bars, so a validation row near the boundary shares future info.
     return make_pipeline(
         StandardScaler(),
-        RidgeCV(alphas=np.logspace(-1, 4, 12), cv=TimeSeriesSplit(3)),
+        RidgeCV(alphas=np.logspace(-1, 4, 12), cv=TimeSeriesSplit(3, gap=PURGE)),
     )
 
 
@@ -64,6 +66,7 @@ def run(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
     d = df.dropna(subset=TARGETS).reset_index(drop=True)      # drops the forecast row
     hours = d.hour.diff().dropna()
     assert (hours == pd.Timedelta("1h")).all(), "feature rows are not contiguous hours"
+    assert PURGE >= max(HORIZONS), "purge must cover the longest overlapping target"
 
     specs = model_specs(d)
     n = len(d)
@@ -90,7 +93,9 @@ def run(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
                 model = maker().fit(d_tr[cols], d_tr[f"y{h}"])
                 out[name] = model.predict(d_te[cols])
                 if name == "lgbm":
-                    for feat, gain in zip(cols, model.feature_importances_):
+                    # total split gain, not the split count that feature_importances_ returns
+                    gains = model.booster_.feature_importance(importance_type="gain")
+                    for feat, gain in zip(cols, gains):
                         importance.append({"h": h, "fold": k, "feature": feat, "gain": float(gain)})
             parts.append(out)
         log.info(

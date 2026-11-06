@@ -49,6 +49,14 @@ def test_twitter_date_format_is_parsed() -> None:
     assert parsed.iloc[0] == pd.Timestamp("2026-09-20 23:57:00", tz="UTC")
 
 
+def test_spent_does_not_double_count_the_test_directory(tmp_path, monkeypatch) -> None:
+    monkeypatch.setattr(t, "TEST_DIR", tmp_path)
+    (tmp_path / "w_20260920_00.meta.json").write_text(
+        json.dumps({"cost_usd": 0.25}), encoding="utf-8"
+    )
+    assert t._spent(tmp_path) == 0.25
+
+
 def test_build_raw_table_skips_meta_and_dedupes(tmp_path, monkeypatch) -> None:
     win = tmp_path / "windows"
     win.mkdir()

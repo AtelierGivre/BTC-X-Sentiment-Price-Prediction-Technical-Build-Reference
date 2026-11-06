@@ -2,8 +2,17 @@ from __future__ import annotations
 
 import pandas as pd
 
-from config import PURGE
-from src.models.walkforward import make_folds
+from config import HORIZONS, PURGE
+from src.models.walkforward import make_folds, make_ridge
+
+
+def test_purge_covers_the_longest_target_horizon() -> None:
+    assert PURGE >= max(HORIZONS)
+
+
+def test_ridge_cv_also_purges_between_inner_folds() -> None:
+    cv = make_ridge().named_steps["ridgecv"].cv
+    assert cv.gap == PURGE
 
 
 def test_gap_between_train_and_test() -> None:

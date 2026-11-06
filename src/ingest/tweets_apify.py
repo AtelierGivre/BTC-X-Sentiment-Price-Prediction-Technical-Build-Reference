@@ -1,7 +1,7 @@
 """Scrape X/Twitter posts with Apify, one day-sized window per run.
 
-Configured for **scrape.badger~twitter-tweets-scraper** (actor id pzMmk1t7AZ8OKJhfU),
-which costs $0.15 per 1,000 tweets on Apify's FREE tier. The FREE plan gives $5/month,
+Configured for **xquik~x-tweet-scraper** (actor id wAusCMrm284Voaw86), which charges
+about $0.15 per 1,000 tweets on Apify's FREE tier. The FREE plan gives $5/month,
 so the scrape is budget-limited (see TWEET_DAYS / APIFY_BUDGET_USD in .env).
 
 Why day windows: X advanced search filters by calendar date (`since:` / `until:`),
@@ -23,6 +23,7 @@ import argparse
 import json
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from pathlib import Path
 
 import pandas as pd
 
@@ -77,7 +78,7 @@ def build_run_input(start: datetime, end: datetime, max_items: int) -> dict:
 def _spent(directory) -> float:
     """Sum finalised cost from window sidecars (real windows + test windows)."""
     total = 0.0
-    for d in (directory, TEST_DIR):
+    for d in {Path(directory), TEST_DIR}:          # set: calling with TEST_DIR must not double count
         for f in d.glob("w_*.meta.json"):
             try:
                 total += float(json.loads(f.read_text(encoding="utf-8")).get("cost_usd") or 0)

@@ -6,10 +6,10 @@
 - **Best forecast:** `ridge_price_only` at h=0 has RMSE ratio
   1.001 vs naive (1.000 = no improvement) and directional accuracy
   48.2%.
-- **Best tradable strategy:** `ridge_price_only__long_flat` — Sharpe -8.02
-  (95% CI -13.37 to -2.32), Sortino -10.27,
-  Max DD -17.9%, net -16.7% vs -10.7% gross
-  (fees 6.9%).
+- **Best model strategy by Sharpe (all are loss-making):** `ridge_price_only__long_flat` — Sharpe -7.93
+  (95% CI -13.28 to -2.26), Sortino -10.16,
+  Max DD -17.7%, net -16.5% vs -10.7% gross
+  (fees 6.7%).
 - **Buy-and-hold:** Sharpe -4.40, Max DD -11.6%,
   net -10.4%.
 
@@ -99,14 +99,14 @@ hourly net returns.
 | strategy                     |   sharpe |   sharpe_ci_low |   sharpe_ci_high |   sortino |   max_drawdown |   total_return |   gross_return |   fee_drag |   n_trades |   n_hours |
 |:-----------------------------|---------:|----------------:|-----------------:|----------:|---------------:|---------------:|---------------:|-----------:|-----------:|----------:|
 | buy_hold                     |   -4.401 |          -9.298 |            1.900 |    -5.816 |         -0.116 |         -0.104 |         -0.104 |      0.000 |          1 |       672 |
-| ridge__long_short            |  -21.331 |         -29.255 |          -14.068 |   -25.026 |         -0.424 |         -0.416 |         -0.085 |      0.449 |        323 |       672 |
-| ridge__long_flat             |  -15.180 |         -21.615 |           -8.653 |   -18.676 |         -0.287 |         -0.277 |         -0.094 |      0.225 |        322 |       672 |
-| lgbm__long_short             |  -14.569 |         -19.176 |           -9.135 |   -18.621 |         -0.314 |         -0.309 |          0.041 |      0.409 |        294 |       672 |
-| lgbm__long_flat              |  -12.646 |         -17.807 |           -7.362 |   -16.179 |         -0.221 |         -0.212 |         -0.034 |      0.204 |        291 |       672 |
-| ridge_price_only__long_short |  -10.102 |         -15.608 |           -5.079 |   -12.689 |         -0.238 |         -0.224 |         -0.111 |      0.136 |         99 |       672 |
-| ridge_price_only__long_flat  |   -8.020 |         -13.369 |           -2.323 |   -10.267 |         -0.179 |         -0.167 |         -0.107 |      0.069 |         99 |       672 |
-| lgbm_price_only__long_short  |  -16.657 |         -22.295 |          -10.464 |   -20.872 |         -0.354 |         -0.347 |         -0.026 |      0.400 |        288 |       672 |
-| lgbm_price_only__long_flat   |  -14.136 |         -18.808 |           -8.826 |   -17.728 |         -0.239 |         -0.235 |         -0.066 |      0.200 |        286 |       672 |
+| ridge__long_short            |  -21.301 |         -29.206 |          -14.159 |   -24.999 |         -0.424 |         -0.416 |         -0.085 |      0.449 |        321 |       672 |
+| ridge__long_flat             |  -15.149 |         -21.567 |           -8.694 |   -18.647 |         -0.286 |         -0.277 |         -0.094 |      0.225 |        321 |       672 |
+| lgbm__long_short             |  -14.546 |         -19.158 |           -9.096 |   -18.598 |         -0.313 |         -0.308 |          0.041 |      0.408 |        292 |       672 |
+| lgbm__long_flat              |  -12.653 |         -17.841 |           -7.302 |   -16.193 |         -0.221 |         -0.212 |         -0.034 |      0.204 |        291 |       672 |
+| ridge_price_only__long_short |  -10.019 |         -15.514 |           -5.001 |   -12.590 |         -0.237 |         -0.222 |         -0.111 |      0.134 |         96 |       672 |
+| ridge_price_only__long_flat  |   -7.928 |         -13.281 |           -2.259 |   -10.155 |         -0.177 |         -0.165 |         -0.107 |      0.067 |         96 |       672 |
+| lgbm_price_only__long_short  |  -16.690 |         -22.391 |          -10.471 |   -20.907 |         -0.354 |         -0.348 |         -0.026 |      0.401 |        287 |       672 |
+| lgbm_price_only__long_flat   |  -14.135 |         -18.822 |           -8.818 |   -17.727 |         -0.239 |         -0.235 |         -0.066 |      0.200 |        286 |       672 |
 
 `fee_drag` is total fees in log-return units (7 bps × turnover); `gross_return` adds it back,
 so the gap between gross and net is the cost of trading. All positions use the h=0 forecast
@@ -117,9 +117,9 @@ moving-block bootstrap (24h blocks, 1,000 resamples) on the Sharpe.
 `ridge_price_only` and `lgbm_price_only` use the same models without any sentiment column.
 Comparing them with `ridge` / `lgbm` answers the real question: **does sentiment add anything
 beyond price?** Read the RMSE-ratio and Sharpe differences, not just the best absolute number.
-LightGBM attributes 58% of its split gain to sentiment features, but the price-only
-ablation matches or beats the full model — gain share measures how often a feature is used,
-not whether it helps out of sample.
+LightGBM attributes 55% of its total split gain to sentiment features, but the
+price-only ablation matches or beats the full model — gain share measures how much a feature
+reduces training loss, not whether it helps out of sample.
 
 ## 9. Charts
 Interactive charts are in `reports/figures/`:
@@ -132,8 +132,9 @@ The tweet sample covers 60 days, not 180, because of the Apify FREE credit;
 price history is longer but sentiment only exists inside that window. The scrape is a
 `Top`-ranked sample (engagement-biased) capped at ~480 tweets/day, so quiet hours are
 thin. Other limits: one market regime, bot noise, X search coverage, fees assumed at
-7 bps with no slippage, and fold-level position resets. A weak or null result
-is acceptable if the method is clean.
+7 bps with no slippage, and positions carried across fold boundaries (test
+windows are contiguous; the final open position is marked to market with no exit fee). A
+weak or null result is acceptable if the method is clean.
 
 ## 11. Reproduction
 ```bash
@@ -149,6 +150,11 @@ Small pre-computed tables (`master`, `features`, `predictions`, `strategy_return
 without re-scraping X and without spending Apify credit.
 
 ## 12. Latest forecast
+
+The forecast below is fitted on all labelled rows and predicts the next unlabelled bar. It is
+therefore **in-sample** and shown for illustration only; it is not part of the out-of-sample
+evaluation above.
+
 | bar                       |   h |   ridge_ret |   ridge_price |   lgbm_ret |   lgbm_price |
 |:--------------------------|----:|------------:|--------------:|-----------:|-------------:|
 | 2026-11-05 06:00:00+00:00 |   0 |    0.000094 |  80407.539294 |   0.000736 | 80459.209331 |

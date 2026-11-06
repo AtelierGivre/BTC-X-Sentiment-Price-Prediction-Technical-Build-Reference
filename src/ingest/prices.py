@@ -77,6 +77,12 @@ def _fetch_binance(days: int, symbol: str) -> pd.DataFrame:
     return df.drop_duplicates("hour").sort_values("hour").reset_index(drop=True)
 
 
+def _drop_incomplete_bars(df: pd.DataFrame, now: pd.Timestamp | None = None) -> pd.DataFrame:
+    """Drop the current, still-forming bar (yfinance happily returns it)."""
+    cutoff = (now if now is not None else pd.Timestamp.now(tz="UTC")).floor("h")
+    return df[df.hour < cutoff].reset_index(drop=True)
+
+
 def _fetch_yfinance(days: int) -> pd.DataFrame:
     import yfinance as yf
 
@@ -93,7 +99,8 @@ def _fetch_yfinance(days: int) -> pd.DataFrame:
     df["hour"] = pd.to_datetime(df[time_col], utc=True).dt.floor("h")
     df = df.rename(columns={"adj close": "close"})
     df = df[["hour"] + NUM_COLUMNS].astype({c: float for c in NUM_COLUMNS})
-    return df.drop_duplicates("hour").sort_values("hour").reset_index(drop=True)
+    df = df.drop_duplicates("hour").sort_values("hour").reset_index(drop=True)
+    return _drop_incomplete_bars(df)
 
 
 def fetch_prices(days: int = DAYS, symbol: str = SYMBOL, source: str = "auto") -> pd.DataFrame:

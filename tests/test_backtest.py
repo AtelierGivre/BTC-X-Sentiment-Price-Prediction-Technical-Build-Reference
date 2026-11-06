@@ -33,6 +33,20 @@ def test_fees_charged_on_turnover() -> None:
     assert fees["buy_hold"] == 0.0
 
 
+def test_positions_are_carried_across_fold_boundaries() -> None:
+    """A position held through a contiguous fold boundary must not pay a second entry fee."""
+    p = _preds()
+    p["fold"] = [0, 0, 0, 1, 1, 1]
+    for col in ["ridge", "lgbm", "ridge_price_only", "lgbm_price_only"]:
+        p[col] = 0.01                       # always long
+
+    _, trades, fees = strategy_returns(p, fee_bps=7)
+
+    assert trades.loc["ridge__long_short", "n_trades"] == 1
+    assert fees["ridge__long_short"] == pytest.approx(7e-4)
+    assert fees["ridge__long_flat"] == pytest.approx(7e-4)
+
+
 def test_gross_equals_net_plus_fees() -> None:
     sr, trades, fees = strategy_returns(_preds(), fee_bps=7)
     st = strategy_table(sr, trades, fees).set_index("strategy")

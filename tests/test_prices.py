@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.ingest.prices import check_prices
+from src.ingest.prices import _drop_incomplete_bars, check_prices
 
 
 def frame(n: int = 10) -> pd.DataFrame:
@@ -31,3 +31,10 @@ def test_duplicate_fails_loudly() -> None:
     df = df.sort_values("hour").reset_index(drop=True)
     with pytest.raises(AssertionError):
         check_prices(df)
+
+
+def test_current_incomplete_bar_is_dropped() -> None:
+    now = pd.Timestamp("2026-01-01 05:20", tz="UTC")
+    out = _drop_incomplete_bars(frame(6), now=now)      # hours 00..05, 05 is still forming
+    assert out.hour.max() == pd.Timestamp("2026-01-01 04:00", tz="UTC")
+    assert len(out) == 5

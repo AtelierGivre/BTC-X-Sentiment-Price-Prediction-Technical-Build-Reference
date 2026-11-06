@@ -33,8 +33,12 @@ def sortino(r) -> float:
 
 
 def max_drawdown(r) -> float:
-    """Worst peak-to-trough fall of the equity curve (log returns -> exp(cumsum))."""
-    eq = np.exp(np.cumsum(pd.Series(r).fillna(0).values))
+    """Worst peak-to-trough fall of the equity curve, starting from equity 1.0.
+
+    Log returns -> exp(cumsum). The explicit 1.0 start matters: without it a loss in
+    the very first bar is never compared with the initial capital and is missed.
+    """
+    eq = np.concatenate([[1.0], np.exp(np.cumsum(pd.Series(r).fillna(0).values))])
     return float((eq / np.maximum.accumulate(eq) - 1).min())
 
 

@@ -74,7 +74,7 @@ def main() -> None:
 - **Best forecast:** `{best.model}` at h={int(best.h)} has RMSE ratio
   {best.rmse_ratio_vs_naive:.3f} vs naive (1.000 = no improvement) and directional accuracy
   {best.dir_acc:.1%}.
-- **Best tradable strategy:** `{bs.strategy}` — Sharpe {bs.sharpe:.2f}
+- **Best model strategy by Sharpe (all are loss-making):** `{bs.strategy}` — Sharpe {bs.sharpe:.2f}
   (95% CI {bs.sharpe_ci_low:.2f} to {bs.sharpe_ci_high:.2f}), Sortino {bs.sortino:.2f},
   Max DD {bs.max_drawdown:.1%}, net {bs.total_return:+.1%} vs {bs.gross_return:+.1%} gross
   (fees {bs.fee_drag:.1%}).
@@ -157,9 +157,9 @@ moving-block bootstrap (24h blocks, 1,000 resamples) on the Sharpe.
 `ridge_price_only` and `lgbm_price_only` use the same models without any sentiment column.
 Comparing them with `ridge` / `lgbm` answers the real question: **does sentiment add anything
 beyond price?** Read the RMSE-ratio and Sharpe differences, not just the best absolute number.
-LightGBM attributes {sent_share:.0%} of its split gain to sentiment features, but the price-only
-ablation matches or beats the full model — gain share measures how often a feature is used,
-not whether it helps out of sample.
+LightGBM attributes {sent_share:.0%} of its total split gain to sentiment features, but the
+price-only ablation matches or beats the full model — gain share measures how much a feature
+reduces training loss, not whether it helps out of sample.
 
 ## 9. Charts
 Interactive charts are in `reports/figures/`:
@@ -172,8 +172,9 @@ The tweet sample covers {tweet_days:.0f} days, not {DAYS}, because of the Apify 
 price history is longer but sentiment only exists inside that window. The scrape is a
 `Top`-ranked sample (engagement-biased) capped at ~480 tweets/day, so quiet hours are
 thin. Other limits: one market regime, bot noise, X search coverage, fees assumed at
-{FEE_BPS:.0f} bps with no slippage, and fold-level position resets. A weak or null result
-is acceptable if the method is clean.
+{FEE_BPS:.0f} bps with no slippage, and positions carried across fold boundaries (test
+windows are contiguous; the final open position is marked to market with no exit fee). A
+weak or null result is acceptable if the method is clean.
 
 ## 11. Reproduction
 ```bash
@@ -189,6 +190,11 @@ Small pre-computed tables (`master`, `features`, `predictions`, `strategy_return
 without re-scraping X and without spending Apify credit.
 
 ## 12. Latest forecast
+
+The forecast below is fitted on all labelled rows and predicts the next unlabelled bar. It is
+therefore **in-sample** and shown for illustration only; it is not part of the out-of-sample
+evaluation above.
+
 {_table(fc, floatfmt=".6f")}
 """
     out = REPORTS / "evaluation_report.md"
