@@ -160,7 +160,8 @@ not whether it helps out of sample.
 ## 9. Charts
 Interactive charts are in `reports/figures/`:
 1. sentiment vs price, 2. tweet volume, 3. rolling sentiment/return correlation,
-4. predicted vs actual, 5. equity curves + drawdown, 6. metric matrix, 7. feature importance.
+4. predicted vs actual, 5. equity curves + drawdown, 6. metric matrix, 7. feature importance,
+8. sentiment-change vs price information matrix (sentiment lag × forecast horizon).
 
 ## 10. Limitations
 The tweet sample covers {tweet_days:.0f} days, not {DAYS}, because of the Apify FREE credit;
@@ -178,6 +179,10 @@ python run_pipeline.py --stage train
 python run_pipeline.py --stage report
 pytest -q
 ```
+
+Small pre-computed tables (`master`, `features`, `predictions`, `strategy_returns`,
+`feature_importance`) are committed under `artifacts/`, so the report can be reproduced
+without re-scraping X and without spending Apify credit.
 
 ## 12. Latest forecast
 {_table(fc, floatfmt=".6f")}

@@ -1,4 +1,4 @@
-"""Seven interactive Plotly charts (HTML; PNG only if kaleido is installed)."""
+"""Eight interactive Plotly charts (HTML; PNG only if kaleido is installed)."""
 from __future__ import annotations
 
 import numpy as np
@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-from config import FIGS, PROC, REPORTS
+from config import FIGS, HORIZONS, PROC, REPORTS
 from src.utils.log import get_logger
 
 log = get_logger(__name__)
@@ -125,6 +125,28 @@ def chart_feature_importance() -> None:
     _save(fig, "07_feature_importance")
 
 
+def chart_sentiment_change_matrix() -> None:
+    """The brief's "visual matrix": how sentiment relates to price across lags and horizons."""
+    m = pd.read_parquet(PROC / "master.parquet").set_index("hour")
+    base = np.log(m.close.shift(1))
+    lags = [0, 1, 2, 3, 6, 12, 24]
+    z = []
+    for lag in lags:
+        s = m.sent_mean.shift(lag)
+        z.append([s.corr(np.log(m.close.shift(-h)) - base, method="spearman") for h in HORIZONS])
+    fig = go.Figure(go.Heatmap(
+        z=np.array(z), x=[f"n+{h}" for h in HORIZONS], y=[f"sent lag {l}h" for l in lags],
+        text=np.round(np.array(z), 3), texttemplate="%{text}",
+        colorscale="RdBu_r", zmid=0, zmin=-0.12, zmax=0.12,
+        colorbar_title="Spearman IC",
+    ))
+    fig.update_layout(
+        title="Sentiment change vs price: information matrix (out-of-sample signal is ~0)",
+        xaxis_title="forecast horizon", yaxis_title="sentiment lag", height=460,
+    )
+    _save(fig, "08_sentiment_change_matrix")
+
+
 def main() -> None:
     chart_sentiment_vs_price()
     chart_tweet_volume()
@@ -133,6 +155,7 @@ def main() -> None:
     chart_equity()
     chart_metric_matrix()
     chart_feature_importance()
+    chart_sentiment_change_matrix()
 
 
 if __name__ == "__main__":

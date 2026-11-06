@@ -47,12 +47,13 @@ def train() -> None:
 
 def report() -> None:
     from src.evaluation import backtest
-    from src.reports import evaluation_report, summary
+    from src.reports import evaluation_report, snapshot, summary
     from src.visualization import charts
     backtest.main()
     charts.main()
     summary.main()
     evaluation_report.main()
+    snapshot.main()
 
 
 STAGES = {"ingest": ingest, "process": process, "train": train, "report": report}

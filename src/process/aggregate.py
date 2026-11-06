@@ -71,6 +71,55 @@ def trim_to_tweets(prices: pd.DataFrame, tweets: pd.DataFrame, warmup_hours: int
     return prices[prices.hour >= start].reset_index(drop=True)
 
 
+def write_database(prices: pd.DataFrame, tweets: pd.DataFrame, master: pd.DataFrame,
+                   path=None) -> None:
+    """Persist both sources and join them IN SQL (the brief asks for a database join).
+
+    Tables: prices, tweets_hourly, master.  View: master_sql = prices LEFT JOIN
+    tweets_hourly USING (hour), i.e. the same join the pandas code performs, executed by
+    DuckDB so the alignment can be checked from the database itself.
+    """
+    import duckdb
+
+    path = path or PROC / "btc.duckdb"
+    hourly = hourly_sentiment(tweets, SENT_COL).reset_index()
+    con = duckdb.connect(str(path))
+    con.register("prices_df", prices)
+    con.register("hourly_df", hourly)
+    con.register("master_df", master)
+    con.execute("CREATE OR REPLACE TABLE prices AS SELECT * FROM prices_df")
+    con.execute("CREATE OR REPLACE TABLE tweets_hourly AS SELECT * FROM hourly_df")
+    con.execute("CREATE OR REPLACE TABLE master AS SELECT * FROM master_df")
+    con.execute("DROP VIEW IF EXISTS master_sql")
+    con.execute(
+        """
+        CREATE VIEW master_sql AS
+        WITH joined AS (
+            SELECT p.hour, p.open, p.high, p.low, p.close, p.volume,
+                   h.n_tweets, h.sent_mean, h.sent_median, h.sent_std, h.pct_pos,
+                   h.pct_neg, h.w_follow, h.w_engage, h.views_sum, h.engage_sum
+            FROM prices p
+            LEFT JOIN tweets_hourly h USING (hour)
+        )
+        SELECT hour, open, high, low, close, volume,
+               COALESCE(n_tweets, 0) AS n_tweets,
+               COALESCE(last_value(sent_mean   IGNORE NULLS) OVER w, 0.0) AS sent_mean,
+               COALESCE(last_value(sent_median IGNORE NULLS) OVER w, 0.0) AS sent_median,
+               COALESCE(last_value(sent_std    IGNORE NULLS) OVER w, 0.0) AS sent_std,
+               COALESCE(last_value(pct_pos     IGNORE NULLS) OVER w, 0.0) AS pct_pos,
+               COALESCE(last_value(pct_neg     IGNORE NULLS) OVER w, 0.0) AS pct_neg,
+               COALESCE(last_value(w_follow    IGNORE NULLS) OVER w, 0.0) AS w_follow,
+               COALESCE(last_value(w_engage    IGNORE NULLS) OVER w, 0.0) AS w_engage,
+               COALESCE(views_sum, 0.0) AS views_sum,
+               COALESCE(engage_sum, 0.0) AS engage_sum,
+               CASE WHEN COALESCE(n_tweets, 0) = 0 THEN 1.0 ELSE 0.0 END AS no_tweets
+        FROM joined
+        WINDOW w AS (ORDER BY hour ROWS BETWEEN 3 PRECEDING AND CURRENT ROW)
+        """
+    )
+    con.close()
+
+
 def main() -> None:
     prices = pd.read_parquet(RAW / "prices_1h.parquet")
     tweets = pd.read_parquet(INTERIM / "tweets_scored.parquet")
@@ -85,11 +134,7 @@ def main() -> None:
     master = build_master(prices, tweets)
     assert master.hour.is_monotonic_increasing and master.hour.is_unique
     master.to_parquet(PROC / "master.parquet", index=False)
-
-    import duckdb
-    con = duckdb.connect(str(PROC / "btc.duckdb"))
-    con.execute("CREATE OR REPLACE TABLE master AS SELECT * FROM master")
-    con.close()
+    write_database(prices, tweets, master)
 
     log.info(
         "master: %d rows | no-tweet hours: %d | median tweets/hour: %.0f",

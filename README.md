@@ -12,6 +12,23 @@ Tavily news ──────────────────────�
                                                               (NOT a model input)
 ```
 
+## Assessment brief — where each item is met
+
+| Brief item | Where |
+|---|---|
+| Scrape X posts (ticker / cashtag / keyword) via Apify | `src/ingest/tweets_apify.py`, query `($BTC OR #Bitcoin OR bitcoin)` |
+| Historical price for the same period | `src/ingest/prices.py` — Binance 1h klines |
+| Timestamps (UTC), post text, likes, reposts, views, follower counts | `tweets_raw.parquet` -> `likes`, `reposts`, `replies`, `views`, `followers` |
+| Align posts with price bars | `src/process/aggregate.py` — hourly master, joined in DuckDB (`master_sql`) |
+| Recent news via Tavily | `src/ingest/news_tavily.py`, surfaced in the 1-page summary |
+| Time-based features from sentiment + price only | `src/features/build.py` — 56 columns, leakage-guarded |
+| 1-page current sentiment outlook | `reports/sentiment_summary.md` |
+| Model for n+0 … n+5 | `src/models/walkforward.py` — Ridge, LightGBM, naive |
+| Walk-forward validation | 4 folds, 6-bar purge, 672 out-of-sample hours |
+| Visual matrix output generator | `reports/figures/01…08` — sentiment vs price over time, plus the lag × horizon matrix |
+| Evaluation report (Sharpe / Sortino / Max Drawdown) | `reports/evaluation_report.md` §7 |
+| Tokens + actor IDs for reproduction | `.env.example`; `.env` is never committed |
+
 ## Fixed conventions (these prevent leakage)
 
 | Item | Rule |
@@ -91,6 +108,7 @@ Actor notes:
 
 Outputs: `reports/evaluation_report.md`, `reports/sentiment_summary.md`,
 `reports/figures/*.html`, `reports/metrics_*.csv`, `logs/pipeline.log`.
+Small pre-computed tables are copied to `artifacts/` so the report can be rebuilt offline.
 
 ## Folder map
 
@@ -102,7 +120,7 @@ src/process/                 clean.py -> sentiment.py -> aggregate.py
 src/features/build.py        features, targets, leakage guard
 src/models/walkforward.py    folds, naive/Ridge/LightGBM, ablations
 src/evaluation/              metrics.py, backtest.py
-src/visualization/charts.py  7 interactive charts
+src/visualization/charts.py  8 interactive charts
 src/reports/                 summary.py, evaluation_report.py
 tests/                       leakage, folds, metrics
 ```
