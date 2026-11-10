@@ -79,6 +79,9 @@ def main() -> None:
         (out / "scrape_summary.json").write_text(
             json.dumps(summary, indent=2) + "\n", encoding="utf-8"
         )
+    news = RAW / "news.json"
+    if news.exists():
+        shutil.copy2(news, out / "news.json")
 
     text = (
         "# Pre-computed outputs\n\n"
@@ -87,7 +90,8 @@ def main() -> None:
         "| file | rows | size |\n|---|---:|---:|\n"
         + "\n".join(rows)
         + "\n\n`scrape_summary.json` records the real scrape coverage and cost, so §2 of the\n"
-        "report can be rebuilt without the raw tweets.\n\n"
+        "report can be rebuilt without the raw tweets. `news.json` preserves the Tavily\n"
+        "headlines used by the 1-page sentiment summary.\n\n"
         "Restore the tables with `python scripts/restore_artifacts.py`, then run\n"
         "`python run_pipeline.py --stage report` (or `--stage train` first to refit the\n"
         "models). See `REPRODUCE.md` for the full instructions.\n"

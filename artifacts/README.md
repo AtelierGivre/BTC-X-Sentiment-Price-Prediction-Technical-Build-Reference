@@ -13,7 +13,8 @@ reproduced without re-scraping X (the raw scrape is ~196 MB and stays out of git
 | `final_forecast.csv` | 6 | 1 KB |
 
 `scrape_summary.json` records the real scrape coverage and cost, so §2 of the
-report can be rebuilt without the raw tweets.
+report can be rebuilt without the raw tweets. `news.json` preserves the Tavily
+headlines used by the 1-page sentiment summary.
 
 Restore the tables with `python scripts/restore_artifacts.py`, then run
 `python run_pipeline.py --stage report` (or `--stage train` first to refit the
