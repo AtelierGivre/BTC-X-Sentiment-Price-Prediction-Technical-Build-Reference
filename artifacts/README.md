@@ -12,6 +12,9 @@ reproduced without re-scraping X (the raw scrape is ~196 MB and stays out of git
 | `feature_importance.parquet` | 1,344 | 14 KB |
 | `final_forecast.csv` | 6 | 1 KB |
 
-Regenerate with `python run_pipeline.py --stage report` after a full run, or use
-these directly: `master.parquet` -> `features.parquet` -> `predictions.parquet` /
-`strategy_returns.parquet` are the exact inputs to the metrics and charts.
+`scrape_summary.json` records the real scrape coverage and cost, so §2 of the
+report can be rebuilt without the raw tweets.
+
+Restore the tables with `python scripts/restore_artifacts.py`, then run
+`python run_pipeline.py --stage report` (or `--stage train` first to refit the
+models). See `REPRODUCE.md` for the full instructions.

@@ -6,7 +6,8 @@ import json
 import pandas as pd
 
 from config import (
-    DAYS, FEE_BPS, HORIZONS, PROC, PURGE, RAW, REPORTS, SYMBOL, TARGETS, TEST_DAYS, TRAIN_DAYS,
+    DAYS, FEE_BPS, HORIZONS, PROC, PURGE, RAW, REPORTS, ROOT, SYMBOL, TARGETS, TEST_DAYS,
+    TRAIN_DAYS,
 )
 from src.features.build import NON_FEATURES
 from src.utils.log import get_logger
@@ -32,14 +33,30 @@ def main() -> None:
         .rename(columns={"min": "test_start", "max": "test_end"})
     )
 
-    tweets = pd.read_parquet(RAW / "tweets_raw.parquet")
-    tweet_days = (tweets.created_at.max() - tweets.created_at.min()).total_seconds() / 86400
-    tweet_cost = sum(
-        float(json.loads(f.read_text(encoding="utf-8")).get("cost_usd") or 0)
-        for f in (RAW / "apify_windows").glob("w_*.meta.json")
-    )
-    tweet_start = tweets.created_at.min()
-    tweet_end = tweets.created_at.max()
+    tweets_path = RAW / "tweets_raw.parquet"
+    scrape_summary = ROOT / "artifacts" / "scrape_summary.json"
+    if tweets_path.exists():
+        tweets = pd.read_parquet(tweets_path)
+        tweet_start = tweets.created_at.min()
+        tweet_end = tweets.created_at.max()
+        n_tweets = len(tweets)
+        tweet_cost = sum(
+            float(json.loads(f.read_text(encoding="utf-8")).get("cost_usd") or 0)
+            for f in (RAW / "apify_windows").glob("w_*.meta.json")
+        )
+    elif scrape_summary.exists():
+        # offline reproduction from artifacts/: no raw tweets, but the real coverage is known
+        snap = json.loads(scrape_summary.read_text(encoding="utf-8"))
+        tweet_start = pd.Timestamp(snap["tweet_start"])
+        tweet_end = pd.Timestamp(snap["tweet_end"])
+        n_tweets = int(snap["n_tweets"])
+        tweet_cost = float(snap["cost_usd"])
+    else:
+        raise FileNotFoundError(
+            "need data/raw/tweets_raw.parquet or artifacts/scrape_summary.json; "
+            "run scripts/restore_artifacts.py first"
+        )
+    tweet_days = (tweet_end - tweet_start).total_seconds() / 86400
     n_labelled = len(features.dropna(subset=TARGETS))
     first_train_days = round(min(TRAIN_DAYS, n_labelled / 2 / 24))
 
@@ -97,7 +114,7 @@ Price source: Binance BTCUSDT hourly klines (fallback yfinance BTC-USD). Full hi
 days), so no hour is trained on a fabricated zero-sentiment bar.
 
 Tweet source: Apify X scrape, actor `xquik~x-tweet-scraper` (~$0.15/1K tweets). Actual
-coverage: **{len(tweets):,} tweets over {tweet_days:.1f} days** ({tweet_start:%Y-%m-%d} →
+coverage: **{n_tweets:,} tweets over {tweet_days:.1f} days** ({tweet_start:%Y-%m-%d} →
 {tweet_end:%Y-%m-%d} UTC), cost **${tweet_cost:.2f}**. A 180-day scrape was not affordable on
 the Apify FREE plan ($5/month), so the model is trained only on the tweet window (plus 24h
 of price warm-up); the rest of the price history is unused. This is disclosed, not silently

@@ -27,7 +27,7 @@ Tavily news ──────────────────────�
 | Walk-forward validation | 4 folds, 6-bar purge, 672 out-of-sample hours |
 | Visual matrix output generator | `reports/figures/01…08` — sentiment vs price over time, plus the lag × horizon matrix |
 | Evaluation report (Sharpe / Sortino / Max Drawdown) | `reports/evaluation_report.pdf` (and `.md`) — §7 |
-| Tokens + actor IDs for reproduction | `.env.example`; `.env` is never committed |
+| Tokens + actor IDs for reproduction | `.env.example`; `.env` is never committed; step-by-step in `REPRODUCE.md` |
 
 ## Fixed conventions (these prevent leakage)
 
@@ -87,6 +87,21 @@ see the pipeline find it. **Demo numbers are not real results.**
 6. `python run_pipeline.py --stage train`
 7. `python run_pipeline.py --stage report`
 
+### Reproduce without Apify credit
+
+The committed `artifacts/` tables are a complete model-ready snapshot. They can rebuild the
+report, or refit the models, without a key, a scrape or any Apify credit:
+
+```bash
+python scripts/restore_artifacts.py
+python run_pipeline.py --stage report        # metrics, charts, summary, report
+# or: python run_pipeline.py --stage train && python run_pipeline.py --stage report
+```
+
+`reports/evaluation_report.pdf` and the PNG charts are already committed. See
+`REPRODUCE.md` for the full paths (offline report, refit from `master.parquet`, or a fresh
+scrape).
+
 ### Budget reality (FREE Apify plan)
 
 The FREE plan includes **$5/month**, so a 180-day scrape is not affordable at
@@ -109,7 +124,7 @@ Actor notes:
 Outputs: `reports/evaluation_report.pdf` (+ `.md` source), `reports/sentiment_summary.md`,
 `reports/figures/*.html`, `reports/figures/png/*.png`, `reports/metrics_*.csv`,
 `logs/pipeline.log`. Small pre-computed tables are copied to `artifacts/` so the report can be
-rebuilt offline.
+rebuilt offline; `scripts/restore_artifacts.py` puts them back into `data/processed/`.
 
 ### PDF and PNG export (optional, dev-only)
 

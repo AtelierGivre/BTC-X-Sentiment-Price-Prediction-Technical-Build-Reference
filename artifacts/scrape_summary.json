@@ -1,0 +1,13 @@
+{
+  "n_tweets": 28342,
+  "tweet_start": "2026-09-06T06:00:15+00:00",
+  "tweet_end": "2026-11-05T05:59:48+00:00",
+  "tweet_days": 59.999688,
+  "cost_usd": 4.253317,
+  "n_windows": 60,
+  "actor_id": "wAusCMrm284Voaw86",
+  "query": "($BTC OR #Bitcoin OR bitcoin) lang:en -filter:replies -filter:retweets",
+  "sort": "Top",
+  "max_items_per_window": 480,
+  "window_hours": 24
+}
